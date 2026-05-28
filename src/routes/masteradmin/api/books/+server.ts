@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { ADMIN_USER, SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
-import { createClient } from '@supabase/supabase-js';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { createClient } from '@supabase/supabase-js';
 import type { RequestHandler } from './$types';
 
 const supabaseAdmin = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);

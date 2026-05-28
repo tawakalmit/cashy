@@ -1,12 +1,17 @@
-import { PUBLIC_BACKEND_URL } from "$env/static/public";
-import { safeFetch } from "$lib/utils/utils.ts";
+import { supabase } from '$lib/supabase';
 
-export async function hitGoogle () {
-    return safeFetch(
-        `${PUBLIC_BACKEND_URL}/auth/google`, 
-        {
-            method: "GET"
-        }, 
-        ""
-    )
+export async function signInWithGoogle() {
+	const { data, error } = await supabase.auth.signInWithOAuth({
+		provider: 'google',
+		options: {
+			redirectTo: `${window.location.origin}/auth/success`
+		}
+	});
+
+	if (error) {
+		console.error('Google sign-in error:', error.message);
+		throw error;
+	}
+
+	return data;
 }

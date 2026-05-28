@@ -1,43 +1,34 @@
-import { goto } from "$app/navigation";
+import { goto } from '$app/navigation';
+import { supabase } from '$lib/supabase';
 
-/* ============================
-  SAFE FETCH (REUSE PATTERN)
-============================ */
-export async function safeFetch(url:string, opts = {}, token:string) {
- const headers = opts.headers ? { ...opts.headers } : {};
- if (token) headers['Authorization'] = `Bearer ${token}`;
+/**
+ * Get current authenticated user from Supabase
+ */
+export const getUser = async () => {
+	const {
+		data: { session }
+	} = await supabase.auth.getSession();
 
- const res = await fetch(url, { ...opts, headers });
+	if (!session) return null;
 
- const data = await res.json().catch(() => null);
+	const { data: profile } = await supabase
+		.from('profiles')
+		.select('*')
+		.eq('id', session.user.id)
+		.single();
 
- if (!res.ok) {
-   const err = new Error(
-     data?.message || `HTTP ${res.status} - ${res.statusText}`
-   );
-   err.status = res.status;
-   err.errors = data?.errors || null;
-   if (data?.message !== "Video generation not found") {
-     alert(err)
-     location.reload()
-   }
-   throw err;
- }
-
- return data;
-}
-
-export const getUser = () => {
-  try {
-    const cassyUser = localStorage.getItem("cassy_user");
-    return cassyUser ? JSON.parse(cassyUser) : null;
-  } catch (err) {
-    console.error("Failed to parse user:", err);
-    return null;
-  }
+	return {
+		id: session.user.id,
+		email: session.user.email,
+		name: profile?.name || session.user.user_metadata?.full_name || '',
+		avatar_url: profile?.avatar_url || session.user.user_metadata?.avatar_url || ''
+	};
 };
 
-export const logout = () => {
-  localStorage.removeItem("cassy_user");
-  goto("/login")
-}
+/**
+ * Logout user
+ */
+export const logout = async () => {
+	await supabase.auth.signOut();
+	goto('/login');
+};

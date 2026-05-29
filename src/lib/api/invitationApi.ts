@@ -57,27 +57,11 @@ export const acceptInvitation = async (invitationId: number): Promise<void> => {
 
 	if (updateInvError) throw updateInvError;
 
-	// Update book members - set status to active
-	const { data: book, error: bookError } = await supabase
-		.from('books')
-		.select('members')
-		.eq('id', invitation.book_id)
-		.single();
-
-	if (bookError) throw bookError;
-
-	const members = typeof book.members === 'string' ? JSON.parse(book.members) : book.members || [];
-	const updatedMembers = members.map((member: any) => {
-		if (member.email === user.data.user!.email) {
-			return { ...member, status: 'active' };
-		}
-		return member;
+	// Update book members - set status to active using RPC (bypasses RLS)
+	const { error: rpcError } = await supabase.rpc('accept_book_invitation', {
+		p_book_id: invitation.book_id,
+		p_user_email: user.data.user.email
 	});
 
-	const { error: updateBookError } = await supabase
-		.from('books')
-		.update({ members: updatedMembers })
-		.eq('id', invitation.book_id);
-
-	if (updateBookError) throw updateBookError;
+	if (rpcError) throw rpcError;
 };

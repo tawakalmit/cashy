@@ -7,25 +7,6 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --header-bg: #ecf0f1;
-  --card-bg: #ffffff;
-  --dropdown-bg: #dddddd;
-  --primary: #f1c40f;
-  --primary-dark: #d4ac0d;
-  --text-primary: #000000;
-  --text-secondary: #555555;
-}
-
-:root.dark {
-  --background: #1a1a2e;
-  --foreground: #e0e0e0;
-  --header-bg: #16213e;
-  --card-bg: #0f3460;
-  --dropdown-bg: #16213e;
-  --primary: #d4ac0d;
-  --primary-dark: #b8960b;
-  --text-primary: #e0e0e0;
-  --text-secondary: #a0a0a0;
 }
 
 .titillium-web-extralight {
@@ -95,7 +76,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not(.dark):not(:has(body)) {
+  :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
@@ -103,10 +84,9 @@
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background: #0a0a0a;
   font-family: "Titillium Web", Arial, Helvetica, sans-serif;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='%239C92AC' fill-opacity='0.4'%3E%3Cpolygon fill-rule='evenodd' points='8 4 12 6 8 8 6 12 4 8 0 6 4 4 6 0 8 4'/%3E%3C/g%3E%3C/svg%3E");
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @layer utilities {

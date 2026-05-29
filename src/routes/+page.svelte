@@ -6,6 +6,7 @@
 	import type { Book } from '$lib/types/book';
 	import type { UserSuggestion } from '$lib/api/booksApi';
 	import { supabase } from '$lib/supabase';
+	import { theme, applyTheme, type Theme } from '$lib/stores/theme';
 
 	import Swal from 'sweetalert2';
 
@@ -13,6 +14,7 @@
 	let createModalIsOpen = $state(false);
 	let editMode = $state(false);
 	let loading = $state(true);
+	let themeMenuOpen = $state(false);
 
 	let books = $state<Book[]>([]);
 	let members = $state<string[]>([]);
@@ -23,6 +25,17 @@
 	let invitationCount = $state<number>(0);
 	let realtimeChannel: any = null;
 	let deferredPrompt: any = $state(null);
+	let currentTheme = $state<Theme>('light');
+
+	theme.subscribe((value) => {
+		currentTheme = value;
+	});
+
+	const setTheme = (value: Theme) => {
+		theme.set(value);
+		applyTheme(value);
+		themeMenuOpen = false;
+	};
 
 	// Capture the beforeinstallprompt event
 	if (typeof window !== 'undefined') {
@@ -205,7 +218,7 @@
 	};
 </script>
 
-<div class="w-full min-h-[100dvh] max-w-[431px] mx-auto bg-[#f1c40f] relative">
+<div class="w-full min-h-[100dvh] max-w-[431px] mx-auto bg-[var(--primary)] relative">
 
 	{#if loading}
 	<div class="w-full h-[100dvh] flex items-center justify-center">
@@ -213,13 +226,13 @@
 	</div>
 	{:else}
 	<!-- Header -->
-	<div class="w-full h-fit py-4 px-5 bg-[#ecf0f1] flex items-center justify-between">
+	<div class="w-full h-fit py-4 px-5 bg-[var(--header-bg)] flex items-center justify-between">
 		<!-- Logo -->
 		<div class="flex items-center gap-2">
 			<div class="w-5">
 				<img src="/cashflow-512.png" alt="img" class="w-full h-full" />
 			</div>
-			<div class="text-black titillium-web-bold">Cashy</div>
+			<div class="text-[var(--text-primary)] titillium-web-bold">Cashy</div>
 		</div>
 
 		<!-- Dropdown -->
@@ -240,26 +253,44 @@
 			{#if optionIsOpen}
 				<div
 					class="fixed inset-0 z-40"
-					on:click={() => (optionIsOpen = false)}
+					on:click={() => { optionIsOpen = false; themeMenuOpen = false; }}
 					on:keydown={() => {}}
 					role="button"
 					tabindex="-1"
 				></div>
 				<div
-					class="absolute right-0 top-8 z-50 w-32 shadow-md flex flex-col gap-3 bg-[#dddddd] rounded p-3 items-end"
+					class="absolute right-0 top-8 z-50 w-40 shadow-md flex flex-col gap-3 bg-[var(--dropdown-bg)] rounded p-3 items-end"
 				>
-					<a href="/invitation" class="text-xs text-black relative">
+					<a href="/invitation" class="text-xs text-[var(--text-primary)] relative">
 						Undangan
 						{#if invitationCount > 0}
 							<span class="absolute -top-2 -right-4 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">{invitationCount}</span>
 						{/if}
 					</a>
-					<button on:click={toogleEditMode} class="text-xs text-black">Kelola Buku</button>
-					<a href="/support" class="text-xs text-black">Support</a>
+					<button on:click={toogleEditMode} class="text-xs text-[var(--text-primary)]">Kelola Buku</button>
+					<div class="relative w-full flex flex-col items-end">
+						<button on:click={() => themeMenuOpen = !themeMenuOpen} class="text-xs text-[var(--text-primary)]">
+							Tema {currentTheme === 'light' ? '☀️' : currentTheme === 'dark' ? '🌙' : '💻'}
+						</button>
+						{#if themeMenuOpen}
+							<div class="mt-1 w-full flex flex-col gap-1 bg-[var(--card-bg)] rounded p-2 items-end border border-gray-300 dark:border-gray-600">
+								<button on:click={() => setTheme('light')} class="text-xs text-[var(--text-primary)] {currentTheme === 'light' ? 'font-bold' : ''}">
+									☀️ Light
+								</button>
+								<button on:click={() => setTheme('dark')} class="text-xs text-[var(--text-primary)] {currentTheme === 'dark' ? 'font-bold' : ''}">
+									🌙 Dark
+								</button>
+								<button on:click={() => setTheme('system')} class="text-xs text-[var(--text-primary)] {currentTheme === 'system' ? 'font-bold' : ''}">
+									💻 System
+								</button>
+							</div>
+						{/if}
+					</div>
+					<a href="/support" class="text-xs text-[var(--text-primary)]">Support</a>
 					{#if deferredPrompt}
-						<button on:click={installApp} class="text-xs text-black">Install Aplikasi</button>
+						<button on:click={installApp} class="text-xs text-[var(--text-primary)]">Install Aplikasi</button>
 					{/if}
-					<button on:click={logout} class="text-xs text-black">Keluar</button>
+					<button on:click={logout} class="text-xs text-[var(--text-primary)]">Keluar</button>
 				</div>
 			{/if}
 		</div>
@@ -274,7 +305,7 @@
 				<div class="flex items-center justify-between">
 					<a
 						href={`/book/${item.id}`}
-						class="rounded-xl bg-white text-black p-3 flex justify-between items-center relative overflow-hidden {editMode
+						class="rounded-xl bg-[var(--card-bg)] text-[var(--text-primary)] p-3 flex justify-between items-center relative overflow-hidden {editMode
 							? 'w-11/12'
 							: 'w-full'}"
 					>
@@ -300,13 +331,13 @@
 					height="70"
 					alt="transaction"
 				/>
-				<div class="text-white text-sm">
+				<div class="text-[var(--foreground)] text-sm">
 					Sepertinya Kamu belum pernah mencatat transaksi.
 				</div>
 			</div>
 
 			<button
-				class="px-10 py-3 bg-white text-black rounded-full text-sm"
+				class="px-10 py-3 bg-[var(--card-bg)] text-[var(--text-primary)] rounded-full text-sm"
 				on:click={() => (createModalIsOpen = true)}
 			>
 				Buat Buku
@@ -323,9 +354,9 @@
 	</button>
 
 	{#if createModalIsOpen}
-		<form class="w-full h-[100dvh] max-w-[431px] mx-auto bg-white fixed top-0">
+		<form class="w-full h-[100dvh] max-w-[431px] mx-auto bg-[var(--background)] fixed top-0">
 			<div
-				class="w-full h-[4rem] bg-[#f1c40f] flex items-center justify-center px-5 relative text-white"
+				class="w-full h-[4rem] bg-[var(--primary)] flex items-center justify-center px-5 relative text-white"
 			>
 				<button class="absolute left-5" on:click={() => (createModalIsOpen = false)}
 					><img src="/icons/back-btn-icon.svg" width="30" height="30" alt="back" /></button
@@ -333,16 +364,16 @@
 				<span class="titillium-web-semibold text-xl">Buat Buku</span>
 			</div>
 			<div class="w-10/12 mx-auto flex flex-col gap-3 mt-5">
-				<label class="text-black titillium-web-semibold">Judul Buku</label>
+				<label class="text-[var(--text-primary)] titillium-web-semibold">Judul Buku</label>
 				<input
 					bind:value={bookTitle}
 					type="text"
 					placeholder="masukkan judul buku"
-					class="border border-[#ddd] rounded-full px-5 py-3 outline-none text-black"
+					class="border border-[#ddd] rounded-full px-5 py-3 outline-none text-[var(--text-primary)] bg-[var(--card-bg)]"
 				/>
 			</div>
 			<div class="w-10/12 mx-auto flex flex-col gap-3 mt-5">
-				<label class="text-black titillium-web-semibold">Undang Anggota</label>
+				<label class="text-[var(--text-primary)] titillium-web-semibold">Undang Anggota</label>
 				{#each members as member, index}
 					<div class="w-full flex items-center justify-between relative">
 						<div class="w-11/12 relative">
@@ -350,21 +381,21 @@
 								type="text"
 								autocomplete="off"
 								placeholder="masukkan email anggota"
-								class="border border-[#ddd] rounded-full px-5 py-3 outline-none text-black w-full"
+								class="border border-[#ddd] rounded-full px-5 py-3 outline-none text-[var(--text-primary)] bg-[var(--card-bg)] w-full"
 								bind:value={members[index]}
 								on:input={() => handleMemberInput(index)}
 								on:focus={() => handleMemberInput(index)}
 								on:blur={() => setTimeout(() => { if (activeMemberIndex === index) { memberSuggestions = []; activeMemberIndex = null; } }, 200)}
 							/>
 							{#if activeMemberIndex === index && memberSuggestions.length > 0}
-								<div class="absolute top-full left-0 w-full bg-white border border-[#ddd] rounded-lg mt-1 shadow-lg z-[300] max-h-40 overflow-y-auto">
+								<div class="absolute top-full left-0 w-full bg-[var(--card-bg)] border border-[#ddd] rounded-lg mt-1 shadow-lg z-[300] max-h-40 overflow-y-auto">
 									{#each memberSuggestions as user}
 										<button
-											class="w-full text-left px-4 py-2 hover:bg-[#f1c40f]/10 text-sm text-black flex flex-col"
+											class="w-full text-left px-4 py-2 hover:bg-[var(--primary)]/10 text-sm text-[var(--text-primary)] flex flex-col"
 											on:mousedown|preventDefault={() => selectMemberSuggestion(index, user)}
 										>
 											<span class="font-medium">{user.name || 'Tanpa nama'}</span>
-											<span class="text-xs text-gray-500">{user.email}</span>
+											<span class="text-xs text-[var(--text-secondary)]">{user.email}</span>
 										</button>
 									{/each}
 								</div>
@@ -383,7 +414,7 @@
 			</div>
 			<button
 				on:click={createBook}
-				class="text-center text-lg cursor-pointer select-none absolute bottom-0 w-full py-3 bg-[#f1c40f] text-white titillium-web-semibold"
+				class="text-center text-lg cursor-pointer select-none absolute bottom-0 w-full py-3 bg-[var(--primary)] text-white titillium-web-semibold"
 				>Simpan</button
 			>
 		</form>

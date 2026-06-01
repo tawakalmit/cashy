@@ -136,3 +136,25 @@ export const updateBook = async (
 
 	return data as Book;
 };
+
+export const leaveBook = async (bookId: number): Promise<void> => {
+	const user = await supabase.auth.getUser();
+	if (!user.data.user) throw new Error('Not authenticated');
+
+	const userEmail = user.data.user.email;
+
+	// Remove current user from book members using RPC (bypasses RLS)
+	const { error: updateError } = await supabase.rpc('leave_book', {
+		p_book_id: bookId,
+		p_user_email: userEmail
+	});
+
+	if (updateError) throw updateError;
+
+	// Delete the invitation record
+	await supabase
+		.from('invitations')
+		.delete()
+		.eq('book_id', bookId)
+		.eq('user_email', userEmail);
+};

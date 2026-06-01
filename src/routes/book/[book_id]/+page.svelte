@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getBook, updateBook, deleteBook, searchUsers } from '$lib/api/booksApi';
+	import { getBook, updateBook, deleteBook, searchUsers, leaveBook } from '$lib/api/booksApi';
 	import { supabase } from '$lib/supabase';
 	import type { Transaction } from '$lib/types/transactions';
 	import type { Member } from '$lib/types/book';
@@ -16,6 +16,7 @@
 	let balance = $state<number>(0);
 	let bookTitle = $state<string>('');
 	let bookMembers = $state<Member[]>([]);
+	let isOwner = $state<boolean>(true);
 
 	let kebabMenuOpen = $state(false);
 	let editModalIsOpen = $state(false);
@@ -49,6 +50,7 @@
 			bookMembers = Array.isArray(getBookData.members) ? getBookData.members : [];
 			transactions = getTransactionsData.data;
 			balance = getTransactionsData.balance;
+			isOwner = getBookData.user_id === session.user.id;
 		} catch (error) {
 			console.error('Failed to load book data:', error);
 		} finally {
@@ -122,6 +124,31 @@
 					goto('/');
 				} catch (error) {
 					Swal.fire('Gagal!', 'Terjadi kesalahan saat menghapus buku.', 'error');
+				}
+			}
+		});
+	};
+
+	const handleLeaveBook = () => {
+		kebabMenuOpen = false;
+		Swal.fire({
+			title: 'Keluar dari buku?',
+			text: 'Kamu tidak akan bisa melihat transaksi di buku ini lagi.',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#d33',
+			cancelButtonColor: '#3085d6',
+			confirmButtonText: 'Ya, keluar!',
+			cancelButtonText: 'Batal'
+		}).then(async (result) => {
+			if (result.isConfirmed) {
+				try {
+					await leaveBook(parseInt(book_id));
+					Swal.fire('Berhasil!', 'Kamu telah keluar dari buku ini.', 'success');
+					goto('/');
+				} catch (error) {
+					console.error(error);
+					Swal.fire('Gagal!', 'Terjadi kesalahan saat keluar dari buku.', 'error');
 				}
 			}
 		});
@@ -279,8 +306,12 @@
 				></div>
 				<div class="absolute right-0 top-8 z-[200] w-36 shadow-md flex flex-col gap-3 bg-[#dddddd] rounded p-3 items-end">
 					<a href={`/book/${book_id}/laporan`} class="text-xs text-black">Laporan</a>
-					<button on:click={openEditModal} class="text-xs text-black">Edit Buku</button>
-					<button on:click={handleDeleteBook} class="text-xs text-red-600">Hapus Buku</button>
+					{#if isOwner}
+						<button on:click={openEditModal} class="text-xs text-black">Edit Buku</button>
+						<button on:click={handleDeleteBook} class="text-xs text-red-600">Hapus Buku</button>
+					{:else}
+						<button on:click={handleLeaveBook} class="text-xs text-red-600">Keluar dari Buku</button>
+					{/if}
 				</div>
 			{/if}
 		</div>
